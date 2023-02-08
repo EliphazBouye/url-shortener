@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+  <form method="post" action="http://localhost:5000/create">
+    <label for="url">Url</label>
+    <input name="url" id="url" required>
+    <input type="submit" value="Short it">
+  </form>
+{% endblock %}

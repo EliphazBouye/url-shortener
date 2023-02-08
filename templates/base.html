@@ -1,0 +1,10 @@
+<!doctype html>
+<title>{% block title %}{% endblock %} - URL Shortener</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<nav>
+  <h1>URL Shortener</h1>
+  
+</nav>
+<section class="content">
+  {% block content %}{% endblock %}
+</section>
