@@ -2,6 +2,8 @@ from flask import Flask,redirect, request, url_for, render_template, flash
 from dotenv import load_dotenv, dotenv_values
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
+from jinja2 import Environment
+from jinja2.loaders import FileSystemLoader
 import string
 import random
 
@@ -61,3 +63,14 @@ def alias(alias):
     for row in res:
         url.append(row.url)
     return redirect(url[0])
+
+@app.route('/<int:id>/delete', methods = ['POST'])
+def delete(id):
+    if request.method == "POST":
+        alias = db.get_or_404(Url, id)
+        db.session.delete(alias)
+        db.session.commit()
+        flash("Alias Deleted")
+        return redirect(url_for('all_short'))
+    flash("Invalid alias")
+    return redirect(url_for('all_short'))
