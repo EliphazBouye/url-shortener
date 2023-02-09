@@ -1,13 +1,14 @@
-from flask import Flask,redirect, request, render_template
+from flask import Flask,redirect, request, url_for, render_template, flash
 from dotenv import load_dotenv, dotenv_values
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import IntegrityError
 import string
 import random
 
-app = Flask(__name__)
-
-load_dotenv()
 config = dotenv_values(".env")
+app = Flask(__name__)
+app.secret_key = config['APP_KEY']
+load_dotenv()
 
 db = SQLAlchemy()
 
@@ -18,7 +19,7 @@ db.init_app(app)
 class Url(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String(250), unique=True, nullable=False)
-    alias = db.Column(db.String(250))
+    alias = db.Column(db.String(250), unique=True)
 
 
 @app.route('/')
@@ -27,22 +28,27 @@ def index():
 
 @app.route('/create', methods=['POST'])
 def create():
-    if request.method == 'POST':
-        url = request.form['url']
-        KEY_LEN = 5
-        def base_str():
-            return (string.ascii_letters+string.digits)
+    db.create_all()
 
-        def key_gen():
-            keylist = [random.choice(base_str()) for i in range(KEY_LEN)]
-            return "".join(keylist)
+    try:
+        if request.method == 'POST':
+            url = request.form['url']
+            KEY_LEN = 5
+            def base_str():
+                return (string.ascii_letters+string.digits)
 
-        short = Url(url=url, alias=key_gen())
-        db.create_all()
-        db.session.add(short)
-        db.session.commit()
+            def key_gen():
+                keylist = [random.choice(base_str()) for i in range(KEY_LEN)]
+                return "".join(keylist)
 
-    return redirect('all_short')
+            short = Url(url=url, alias=key_gen())
+            db.session.add(short)
+            db.session.commit()
+            return redirect(url_for('all_short'))
+    except IntegrityError:
+        flash("Url already use")
+        return redirect(url_for('index'))
+
 
 @app.route('/all_short')
 def all_short():

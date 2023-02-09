@@ -1,4 +1,8 @@
 
+{% extends 'base.html' %}
+
+{% block content %}
+    <h3>List of url and short :</h3>
 <ul>
     {% for short in result %}
         <li>
@@ -8,3 +12,4 @@
         </li>
     {% endfor %}
 </ul>
+{% endblock %}
