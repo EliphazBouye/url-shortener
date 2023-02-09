@@ -1,9 +1,12 @@
 <!doctype html>
 <title>{% block title %}{% endblock %} - URL Shortener</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<nav>
+<nav style="padding-bottom: 5px">
   <h1>URL Shortener</h1>
-  
+  {% block menu%}
+    <a href="{{url_for('index')}}">Add URL</a> |
+    <a href="{{url_for('all_short')}}">All URL Short</a>
+  {%endblock%}
 </nav>
 <section class="content">
   {% block content %}{% endblock %}
