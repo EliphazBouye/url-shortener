@@ -1,1 +1,10 @@
-{{result}}
+
+<ul>
+    {% for short in result %}
+        <li>
+            <em>url : {{ short.url }}</em>
+            <br>
+            <strong>alias : {{base}}{{short.alias}}</strong>
+        </li>
+    {% endfor %}
+</ul>
