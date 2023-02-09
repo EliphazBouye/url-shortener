@@ -1,4 +1,4 @@
-from flask import Flask,redirect, request, url_for, render_template, flash
+from flask import Flask, redirect, jsonify, request, url_for, render_template, flash
 from dotenv import load_dotenv, dotenv_values
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
@@ -6,6 +6,7 @@ from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 import string
 import random
+import json
 
 config = dotenv_values(".env")
 app = Flask(__name__)
@@ -21,48 +22,60 @@ db.init_app(app)
 class Url(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String(250), unique=True, nullable=False)
-    alias = db.Column(db.String(250), unique=True)
+    alias = db.Column(db.String(6), unique=True)
+
+    def to_json(self):
+        return {
+            "id": int(self.id),
+            "url": str(self.url),
+            "alias": str(self.alias),
+        }
 
 
-@app.route('/')
-def index():
-    return render_template("index.html")
+# @app.route('/')
+# def index():
+#     return render_template("index.html")
 
-@app.route('/create', methods=['POST'])
+@app.post('/create')
 def create():
     db.create_all()
 
     try:
-        if request.method == 'POST':
-            url = request.form['url']
-            KEY_LEN = 5
-            def base_str():
-                return (string.ascii_letters+string.digits)
+        url = request.json['url']
+        KEY_LEN = 5
+        def base_str():
+            return (string.ascii_letters+string.digits)
 
-            def key_gen():
-                keylist = [random.choice(base_str()) for i in range(KEY_LEN)]
-                return "".join(keylist)
+        def key_gen():
+            keylist = [random.choice(base_str()) for i in range(KEY_LEN)]
+            return "".join(keylist)
 
-            short = Url(url=url, alias=key_gen())
-            db.session.add(short)
-            db.session.commit()
-            return redirect(url_for('all_short'))
+        short = Url(url=url, alias=key_gen())
+        db.session.add(short)
+        db.session.commit()
+        return jsonify({"status": True, "message": "URL Added"})
     except IntegrityError:
-        flash("Url already use")
-        return redirect(url_for('index'))
+        return jsonify({"status": False, "message": "URL Not Added"})
 
 
 @app.route('/all_short')
 def all_short():
-    return render_template("result.html", result = Url.query.all(), base = request.url_root)
+    urls = Url.query.all()
+    #db.session.query(Url).all()
+    result = [url.to_json() for url in urls]
+    # serialize = json.dumps(result)
+    return jsonify(result)
+    
 
 @app.route('/<alias>')
 def alias(alias):
     res = db.session.query(Url).filter(Url.alias == alias)
-    url = []
+    url = {}
     for row in res:
-        url.append(row.url)
-    return redirect(url[0])
+        url["url"] = row.url
+    if url == {}:
+        return jsonify({"flash": "Invalid URL"})
+    return jsonify(url)
 
 @app.route('/<int:id>/delete', methods = ['POST'])
 def delete(id):
@@ -70,7 +83,10 @@ def delete(id):
         alias = db.get_or_404(Url, id)
         db.session.delete(alias)
         db.session.commit()
-        flash("Alias Deleted")
-        return redirect(url_for('all_short'))
-    flash("Invalid alias")
-    return redirect(url_for('all_short'))
+        return jsonify({"flash": "Alias Deleted"})
+    return jsonify({"flash": 'Invalid alias'})
+
+
+@app.route('/test_json')
+def test_json():
+    return jsonify({"Test":"Test json response"})
