@@ -2,11 +2,8 @@ from flask import Flask, redirect, jsonify, request, url_for, render_template, f
 from dotenv import load_dotenv, dotenv_values
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
-from jinja2 import Environment
-from jinja2.loaders import FileSystemLoader
 import string
 import random
-import json
 
 config = dotenv_values(".env")
 app = Flask(__name__)
@@ -59,7 +56,6 @@ def all_short():
     urls = Url.query.all()
     #db.session.query(Url).all()
     result = [url.to_json() for url in urls]
-    # serialize = json.dumps(result)
     return jsonify(result)
     
 
