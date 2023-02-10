@@ -20,6 +20,7 @@ class Url(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String(250), unique=True, nullable=False)
     alias = db.Column(db.String(6), unique=True)
+    clicks = db.Column(db.Integer, nullable=False)
 
     def to_json(self):
         return {
