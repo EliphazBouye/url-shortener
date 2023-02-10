@@ -13,26 +13,28 @@ load_dotenv()
 db = SQLAlchemy()
 
 app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql://{config['DB_USER']}:{config['DB_PASS']}@localhost/{config['DB_NAME']}"
+
 db.init_app(app)
+db.create_all()
 
 # MODEL
 class Url(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String(250), unique=True, nullable=False)
     alias = db.Column(db.String(6), unique=True)
-    clicks = db.Column(db.Integer, nullable=False)
+    clicks = db.Column(db.Integer, default=int(0))
 
     def to_json(self):
         return {
             "id": int(self.id),
             "url": str(self.url),
             "alias": str(self.alias),
+            "clicks": str(self.clicks)
         }
 
-
+#ROUTES
 @app.post('/api/create')
 def create():
-    db.create_all()
 
     try:
         url = request.json['url']
@@ -54,27 +56,26 @@ def create():
 
 @app.route('/api/all_short')
 def all_short():
-    urls = Url.query.all()
-    #db.session.query(Url).all()
+    urls = db.session.query(Url).all()
     result = [url.to_json() for url in urls]
     return jsonify(result)
     
 
-@app.route('/api/<alias>')
+@app.route('/<alias>')
 def alias(alias):
-    res = db.session.query(Url).filter(Url.alias == alias)
-    url = {}
-    for row in res:
-        url["url"] = row.url
-    if url == {}:
-        return jsonify({"flash": "Invalid URL"})
-    return jsonify(url)
-
-@app.route('/api/<int:id>/delete', methods = ['POST'])
-def delete(id):
-    if request.method == "POST":
-        alias = db.get_or_404(Url, id)
-        db.session.delete(alias)
+    result_query = db.session.query(Url).filter(Url.alias == alias)
+    url_infos = {}
+    for url in result_query:
+        url_infos["url"] = url.url
+        url_infos['url_clicks'] = url.clicks
+        url.clicks = int(url_infos['url_clicks']) + 1
         db.session.commit()
-        return jsonify({"flash": "Alias Deleted"})
-    return jsonify({"flash": 'Invalid alias'})
+    
+    return jsonify(url_infos)
+
+@app.delete('/api/<int:id>/delete')
+def delete(id):
+    alias = db.get_or_404(Url, id)
+    db.session.delete(alias)
+    db.session.commit()
+    return jsonify({"flash": "Alias Deleted"})
