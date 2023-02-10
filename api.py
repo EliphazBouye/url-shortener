@@ -32,11 +32,7 @@ class Url(db.Model):
         }
 
 
-# @app.route('/')
-# def index():
-#     return render_template("index.html")
-
-@app.post('/create')
+@app.post('/api/create')
 def create():
     db.create_all()
 
@@ -58,7 +54,7 @@ def create():
         return jsonify({"status": False, "message": "URL Not Added"})
 
 
-@app.route('/all_short')
+@app.route('/api/all_short')
 def all_short():
     urls = Url.query.all()
     #db.session.query(Url).all()
@@ -67,7 +63,7 @@ def all_short():
     return jsonify(result)
     
 
-@app.route('/<alias>')
+@app.route('/api/<alias>')
 def alias(alias):
     res = db.session.query(Url).filter(Url.alias == alias)
     url = {}
@@ -77,7 +73,7 @@ def alias(alias):
         return jsonify({"flash": "Invalid URL"})
     return jsonify(url)
 
-@app.route('/<int:id>/delete', methods = ['POST'])
+@app.route('/api/<int:id>/delete', methods = ['POST'])
 def delete(id):
     if request.method == "POST":
         alias = db.get_or_404(Url, id)
@@ -85,8 +81,3 @@ def delete(id):
         db.session.commit()
         return jsonify({"flash": "Alias Deleted"})
     return jsonify({"flash": 'Invalid alias'})
-
-
-@app.route('/test_json')
-def test_json():
-    return jsonify({"Test":"Test json response"})
